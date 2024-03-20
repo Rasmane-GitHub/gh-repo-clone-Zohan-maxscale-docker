@@ -1,90 +1,83 @@
-# MariaDB MaxScale Docker image
-
-This Docker image runs the latest 2.4 version of MariaDB MaxScale.
-
--	[Travis CI:  
-	![build status badge](https://img.shields.io/travis/mariadb-corporation/maxscale-docker/master.svg)](https://travis-ci.org/mariadb-corporation/maxscale-docker/branches)
-
-## Running
-[The MaxScale docker-compose setup](./docker-compose.yml) contains MaxScale
-configured with a three node master-slave cluster. To start it, run the
-following commands in this directory.
-
+# Maxscale Docker-Compose Setup Documentation
+ 
+## Introduction
+ 
+This README.md file provides documentation for setting up and running Maxscale with Docker-Compose. 
+Before starinng the project open the command line and you will need to install:
+`-`  Docker. 
+`-` Docker-Compose.
+`-` Python . 
+`-` mysql.connector
+ 
+### Docker installation:
+for a succesfful `installation` use the steps on this link: 
+[https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04]
+ 
+### Docker-Compose
+Install a were version of Docker-compose follo this link:
+[https://www.digitalocean.com/community/tutorials/how-to-install-docker-compose-on-ubuntu-20-04-quickstart]
+During the tutorial use this command  to update to the newest version of docker-compose:
+ 
 ```
-docker-compose build
-docker-compose up -d
+$ sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.7/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 ```
-
-After MaxScale and the servers have started (takes a few minutes), you can find
-the readwritesplit router on port 4006 and the readconnroute on port 4008. The
-user `maxuser` with the password `maxpwd` can be used to test the cluster.
-Assuming the mariadb client is installed on the host machine:
+### Python install:
+Use this commands to install python3 that will be used to run the .py file in file inside maxscale.
 ```
-$ mysql -umaxuser -pmaxpwd -h 127.0.0.1 -P 4006 test
-Welcome to the MariaDB monitor.  Commands end with ; or \g.
-Your MySQL connection id is 5
-Server version: 10.2.12 2.2.9-maxscale mariadb.org binary distribution
-
-Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
-
-Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
-
-MySQL [test]>
+$ sudo apt update
+$ sudo apt -y upgrade
+$ python3 -V
 ```
-You can edit the [`maxscale.cnf.d/example.cnf`](./maxscale.cnf.d/example.cnf)
-file and recreate the MaxScale container to change the configuration.
-
-To stop the containers, execute the following command. Optionally, use the -v
-flag to also remove the volumes.
-
-To run maxctrl in the container to see the status of the cluster:
+ 
 ```
-$ docker-compose exec maxscale maxctrl list servers
-┌─────────┬─────────┬──────┬─────────────┬─────────────────┬──────────┐
-│ Server  │ Address │ Port │ Connections │ State           │ GTID     │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼──────────┤
-│ server1 │ master  │ 3306 │ 0           │ Master, Running │ 0-3000-5 │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼──────────┤
-│ server2 │ slave1  │ 3306 │ 0           │ Slave, Running  │ 0-3000-5 │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼──────────┤
-│ server3 │ slave2  │ 3306 │ 0           │ Running         │ 0-3000-5 │
-└─────────┴─────────┴──────┴─────────────┴─────────────────┴──────────┘
-
+Output
+Python 3.10.2+
 ```
-
-The cluster is configured to utilize automatic failover. To illustrate this you can stop the master
-container and watch for maxscale to failover to one of the original slaves and then show it rejoining
-after recovery:
+To manage software packages for Python, let’s install pip
 ```
-$ docker-compose stop master
-Stopping maxscaledocker_master_1 ... done
-$ docker-compose exec maxscale maxctrl list servers
-┌─────────┬─────────┬──────┬─────────────┬─────────────────┬─────────────┐
-│ Server  │ Address │ Port │ Connections │ State           │ GTID        │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼─────────────┤
-│ server1 │ master  │ 3306 │ 0           │ Down            │ 0-3000-5    │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼─────────────┤
-│ server2 │ slave1  │ 3306 │ 0           │ Master, Running │ 0-3001-7127 │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼─────────────┤
-│ server3 │ slave2  │ 3306 │ 0           │ Slave, Running  │ 0-3001-7127 │
-└─────────┴─────────┴──────┴─────────────┴─────────────────┴─────────────┘
-$ docker-compose start master
-Starting master ... done
-$ docker-compose exec maxscale maxctrl list servers
-┌─────────┬─────────┬──────┬─────────────┬─────────────────┬─────────────┐
-│ Server  │ Address │ Port │ Connections │ State           │ GTID        │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼─────────────┤
-│ server1 │ master  │ 3306 │ 0           │ Slave, Running  │ 0-3001-7127 │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼─────────────┤
-│ server2 │ slave1  │ 3306 │ 0           │ Master, Running │ 0-3001-7127 │
-├─────────┼─────────┼──────┼─────────────┼─────────────────┼─────────────┤
-│ server3 │ slave2  │ 3306 │ 0           │ Slave, Running  │ 0-3001-7127 │
-└─────────┴─────────┴──────┴─────────────┴─────────────────┴─────────────┘
-
+$ sudo apt install -y python3-pip
+$ pip3 install package_name
+$ sudo apt install -y build-essential libssl-dev libffi-dev python3-dev
 ```
-
-Once complete, to remove the cluster and maxscale containers:
-
+ 
+### Install mysql.connector
+to run the sql file in maxscale you will need to install mysql.connecter
 ```
-docker-compose down -v
+pip3 install mysql-connector
+```
+ 
+## Running 
+To run MaxScale with Docker Compose, follow these steps:
+ 
+1. Forked the repository as instructed in github.
+2. Make a directory  of you choosing with this commands: 
+   ```
+   mkdir [directory name ] example: mkdir final370
+   ```
+then change directory 
+``
+cd final370
+```
+3. clone the forked repository in the command line inside the expample directory by entering:
+```
+https://github.com/Rasmane-GitHub/gh-repo-clone-Zohan-maxscale-docker.git
+```
+4.  Navigate to CNE370-maxscale directory and open maxcale.
+5. while inside maxscale, open the maxscale.cnf.d folder and edit and save  the example.cnf file with this command:
+```
+$ sudo nano example.cnf
+```
+after that edit and save the docker-compose.yml file with this command:
+```
+$ sudo nano docker-compose
+```
+6. Run docker-compose following this command:
+```
+sudo docker-compose up -d
+```
+the container should be running some servers.
+ 
+This command will allow to see a better formated table for your servers.
+```
+docker-compose exec maxscale maxctrl list servers
 ```
