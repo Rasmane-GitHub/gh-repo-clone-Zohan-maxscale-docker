@@ -62,7 +62,7 @@ cd final370
 ```
 https://github.com/Rasmane-GitHub/gh-repo-clone-Zohan-maxscale-docker.git
 ```
-4.  Navigate to CNE370-maxscale directory and open maxcale.
+4.  Navigate to gh-repo-clone-Zohan-maxscale-docker directory and open maxcale.
 5. while inside maxscale, open the maxscale.cnf.d folder and edit and save  the example.cnf file with this command:
 ```
 $ sudo nano example.cnf
